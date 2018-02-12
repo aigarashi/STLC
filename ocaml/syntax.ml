@@ -6,6 +6,7 @@ type ty =
   | TyBool
   | TyFun of ty * ty
   | TyList of ty
+  | TyDyn
 
 type binOp = Plus | Mult | Lt | Cons
 
@@ -36,6 +37,25 @@ let index2name i = (* i must be non negative *)
     Buffer.add_char b '\'';
     List.iter (fun c -> Buffer.add_char b c) (aux i);
     Buffer.contents b
+
+module IL =
+  struct
+    type tag = Int | Bool | Fun (* ?->? *) | List (* ? list *)
+
+    type exp =
+      | Var of id
+      | ILit of int
+      | BLit of bool
+      | BinOp of binOp * exp * exp
+      | IfExp of exp * exp * exp
+      | LetExp of id * exp * exp
+      | FunExp of id * ty * exp
+      | AppExp of exp * exp
+      | LetRecExp of id * id * ty * exp * exp
+      | NilLit of ty
+      | MatchExp of exp * exp * id * id * exp
+      | CastExp of exp * ty * ty
+  end
 
 let pp_ty ty = 
   let rec aux = function
