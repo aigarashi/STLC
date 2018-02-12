@@ -14,13 +14,10 @@ PROGNAME=miniml
 OBJS=mySet.cmx syntax.cmx parser.cmx lexer.cmx environment.cmx typing.cmx eval.cmx
 TESTOBJS=mySet.cmo syntax.cmo parser.cmo lexer.cmo environment.cmo typing.cmo eval.cmo
 
-DEPEND += lexer.ml parser.ml typeLexer.ml typeParser.ml
+DEPEND += lexer.ml parser.ml
 
 all: $(DEPEND) $(OBJS) main.cmx
 	$(OCAMLOPT) -o $(PROGNAME) $(OCAMLFLAGS) $(OBJS) main.cmx
-
-test: $(DEPEND) $(TESTOBJS) typeLexer.cmo typeParser.cmo test.cmo
-	$(OCAMLC) -o testtyping $(OCAMLFLAGS) $(TESTOBJS)  typeLexer.cmo typeParser.cmo test.cmo
 
 # Common rules
 .SUFFIXES: .ml .mli .cmo .cmi .cmx
