@@ -26,7 +26,7 @@
        * `Syntax.IL.exp` defines expressions in the IL.
 * Implement (or implement) the following types and functions:
    * `Typing.con : Syntax.ty -> Syntax.ty -> bool` to judge type consistency.
-   * `Typing.translate : Syntax.exp -> Syntax.IL.exp` to typecheck the given expression and translate to an IL expression.
+   * `Typing.translate : Typing.tyenv -> Syntax.exp -> (Syntax.ty * Syntax.IL.exp)` to typecheck the given expression and translate to an IL expression.
    * `Eval.exval` so that it contains tagged values.
    * `Eval.cast : Eval.exval -> Syntax.ty -> Syntax.ty -> Eval.exval` to evaluate a cast from one type to another.
    * `Eval.eval : Eval.exval Environment.t -> Syntax.IL.exp -> Eval.exval`.
