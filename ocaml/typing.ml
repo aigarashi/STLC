@@ -59,6 +59,7 @@ let rec ty_exp tyenv = function
      if ty1 = tyfun2 then
        ty_exp (Environment.extend id tyfun tyenv) exp2
      else err "The declared return type doesn't match the type of the body: let rec"
+  | LetRecExp (_, _, _, _, _) -> err "Can't happen: LetRecExp case in Typing.ty_exp"
   | NilLit ty -> TyList ty
   | MatchExp (test, nil_case, hd, tl, cons_case) ->
      let ty1 = ty_exp tyenv test in
@@ -83,5 +84,6 @@ let ty_decl tyenv = function
      if ty1 = tyfun2 then
        (Environment.extend id tyfun tyenv, tyfun)
      else err "The declared return type doesn't match the type of the body: let rec"
+  | RecDecl (_, _, _, _) -> err "Can't happen: RecDecl case in Typing.ty_decl"
 
 
