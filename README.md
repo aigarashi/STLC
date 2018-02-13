@@ -23,11 +23,13 @@ It's like OCaml but type annotations are required for variable declarations.
 ## Extending to GTLC
 
 * Check out the branch `gtlc`.
-   * `Syntax.ty` has been extended.
+   * `Syntax.ty` has been extended so that it includes the type Dynamic (denoted by `TyDyn`).
    * `Syntax.IL` is the module for syntactic entities in the IL.
        * `Syntax.IL.tag` defines type tags G.
        * `Syntax.IL.exp` defines expressions in the IL.
-* Implement (or implement) the following types and functions:
+* Modify the lexer and parser so that `?` (or a symbol you like) is recognized as `TyDyn` above.
+   * It would be nice if an omitted type annotation is recoginized as a declaration `: ?`.
+* Implement (or modify) the following types and functions:
    * `Typing.con : Syntax.ty -> Syntax.ty -> bool` to judge type consistency.
    * `Typing.translate : Typing.tyenv -> Syntax.exp -> (Syntax.ty * Syntax.IL.exp)` to typecheck the given expression and translate to an IL expression.
    * `Eval.exval` so that it contains tagged values.
