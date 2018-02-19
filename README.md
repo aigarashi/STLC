@@ -3,7 +3,6 @@
 ## Build instructions
 
 * Do `make depend` and `make`.  You'll get `miniml`.
-    * Or, do `omake`.
 
 ## Syntax
 
