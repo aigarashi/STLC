@@ -51,7 +51,7 @@ AppExpr :
 AExpr :
     INTV { ILit $1 }
   | ID { Var $1 }
-  | LBRACKET Type RBRACKET { NilLit (TyList $2) }
+  | LBRACKET Type RBRACKET { NilLit $2 }
   | LPAREN Expr RPAREN { $2 }
 
 IfExpr :
