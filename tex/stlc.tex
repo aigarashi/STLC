@@ -1,0 +1,517 @@
+\documentclass[11pt]{jarticle}
+
+\usepackage{ifthen,a4full,bcprules,proof,color,local,multicol,url,latexsym}
+\title{STLC and GTLC}
+\author{Atsushi Igarashi\\
+  Graduate School of Informatics \\
+  Kyoto University \\
+ \url{https://github.com/aigarashi/STLC} \\
+ % \classURL
+}
+\date{April 13, 2018}
+
+\def\syncat#1{\ensuremath{\langle #1 \rangle}}
+\def\mv#1{\mbox{\boldmath $#1$}}
+
+\definecolor{gray96}{gray}{.9}
+%\setlength{\fboxsep}{0pt}
+\newcommand{\gb}[1]{\ifmmode%
+  \colorbox{gray96}{\(#1\)}
+\else%
+  $\colorbox{gray96}{#1}$
+\fi
+}
+\newenvironment{newrule}{\newruletrue}{\newrulefalse}
+\def\HIGHLIGHT{\gb}
+
+\begin{document}
+
+\maketitle
+
+\section{STLC}
+\subsection{Syntax}
+
+\[
+  \begin{array}{llcl}
+    & \mv{n} &\in& \set{\ldots, \texttt{-2}, \texttt{-1}, \texttt{0}, \texttt{1}, \texttt{2}, \ldots} \\
+    & \mv{b} &\in& \set{\texttt{true}, \texttt{false}} \\
+\mbox{(types)} & \mv{S}, \mv{T} & ::= & \nat \\
+&& | & \bool \\
+    && | & \mv{S} \imp \mv{T} \\
+    && | & \mv{T}\; \listty \\
+    \mbox{(expressions)} & \mv{e} & ::= & \mv{x} \\
+    && | & \mv{n} \\
+    && | & \mv{b} \\
+    && | & \mv{e} \texttt{+} \mv{e} \mid \mv{e} \texttt{*} \mv{e} \mid \mv{e} \texttt{<} \mv{e} \\
+    && | & \bif{\mv{e}}{\mv{e}}{\mv{e}} \\
+    && | & \texttt{let } \mv{x} = \mv{e} \texttt{ in } \mv{e} \\
+    && | & \abs{\mv{x}}{\mv{T}}{\mv{e}} \\
+    && | & \mv{e}\; \mv{e} \\
+    && | & \texttt{let rec $\mv{x}$($\mv{x}$:$\mv{T}$)} : \mv{T} = \mv{e} \texttt{ in } \mv{e} \\
+    && | & \texttt{[$\mv{T}$]} \\
+    && | & \mv{e} \texttt{::} \mv{e} \\
+    && | & \matchl{\mv{e}}{\mv{e}}{\mv{x}}{\mv{x}}{\mv{e}} \\
+    \mbox{(values)} & \mv{v} & ::= & \mv{n} \mid \mv{b} \\
+    && | & \texttt{(\mv{E})[$\absunty{\mv{x}}{\mv{e}}$]} \\
+    && | & \texttt{(\mv{E})[rec $\mv{x}$($\mv{x}$) = $\mv{e}$]} \\
+    && | & \texttt{[]} \mid \mv{v} \texttt{::} \mv{v} \\
+\mbox{(environments)}    
+    &\mv{E}& ::= & \bullet \\ && | & \mv{E}, \mv{x} = \mv{v}
+\end{array}
+\]
+
+\subsection{Evaluation}
+
+\noindent
+\fbox{$\mv{E} \vdash \mv{e} \Downarrow \mv{v}$}
+
+\typicallabel{E-Var}
+\infrule[E-Var]{
+  \mv{x_i} = \mv{v_i} \in \mv{E}
+}{
+  \mv{E} \vdash \mv{x_i} \Downarrow \mv{v_i}
+}
+\infrule[E-Num]{
+}{
+  \mv{E} \vdash \mv{n} \Downarrow \mv{n}
+}
+\infrule[E-Bool]{
+}{
+  \mv{E} \vdash \mv{b} \Downarrow \mv{b}
+}
+\infrule[E-Plus]{
+  \mv{E} \vdash \mv{e_1} \Downarrow \mv{n_1} \andalso
+  \mv{E} \vdash \mv{e_1} \Downarrow \mv{n_2} \andalso
+  \mbox{(\mv{n_3} is the sum of \mv{n_1} and \mv{n_2})}
+}{
+  \mv{E} \vdash \mv{e_1} \texttt{+} \mv{e_2} \Downarrow \mv{n_3}
+}
+\infrule[E-IfT]{
+  \mv{E} \vdash \mv{e_1} \Downarrow \texttt{true} \andalso
+  \mv{E} \vdash \mv{e_2} \Downarrow \mv{v}
+}{
+  \mv{E} \vdash \bif{\mv{e_1}}{\mv{e_2}}{\mv{e_3}} \Downarrow \mv{v}
+}
+\infrule[E-IfF]{
+  \mv{E} \vdash \mv{e_1} \Downarrow \texttt{false} \andalso
+  \mv{E} \vdash \mv{e_3} \Downarrow \mv{v}
+}{
+  \mv{E} \vdash \bif{\mv{e_1}}{\mv{e_2}}{\mv{e_3}} \Downarrow \mv{v}
+}
+\infrule[E-Let]{
+  \mv{E} \vdash \mv{e_1} \Downarrow \mv{v_1} \andalso
+  \mv{E}, \mv{x} = \mv{v_1} \vdash \mv{e_2} \Downarrow \mv{v_2}
+}{
+  \mv{E} \vdash \texttt{let } \mv{x} = \mv{e_1} \texttt{ in } \mv{e_2} \Downarrow \mv{v_2}
+}
+\infrule[E-Fun]{
+}{
+  \mv{E} \vdash \abs{\mv{x}}{\mv{T}}{\mv{e}} \Downarrow \texttt{(\mv{E})[$\absunty{\mv{x}}{\mv{e}}$]}
+}
+\infrule[E-App]{
+  \mv{E} \vdash \mv{e_1} \Downarrow \mv{v_1} \andalso
+  \mv{E} \vdash \mv{e_2} \Downarrow \mv{v_2} \andalso
+  \mv{v_1} @ \mv{v_2} \Downarrow \mv{v}
+}{
+  \mv{E} \vdash \mv{e_1}\; \mv{e_2} \Downarrow \mv{v}
+}
+\infrule[E-LetRec]{
+  \mv{E}, \mv{x} =\texttt{(\mv{E})[rec $\mv{x}$($\mv{y}$) = \mv{e_1}]}
+  \vdash \mv{e_2} \Downarrow \mv{v_2}
+}{
+  \mv{E} \vdash \texttt{let rec $\mv{x}$($\mv{y}$:$\mv{T_1}$)} : \mv{T_2} = \mv{e_1} \texttt{ in } \mv{e_2} \Downarrow \mv{v_2}
+}
+\infrule[E-Nil]{
+}{
+  \mv{E} \vdash \texttt{[\mv{T}]} \Downarrow \texttt{[]}
+}
+\infrule[E-Cons]{
+  \mv{E} \vdash \mv{e_1} \Downarrow \mv{v_1} \andalso
+  \mv{E} \vdash \mv{e_2} \Downarrow \mv{v_2}
+}{
+  \mv{E} \vdash \mv{e_1}\texttt{::}\mv{e_2} \Downarrow \mv{v_1}\texttt{::}\mv{v_2}
+}
+\infrule[E-MatchNil]{
+  \mv{E} \vdash \mv{e_1} \Downarrow \texttt{[]} \andalso
+  \mv{E} \vdash \mv{e_2} \Downarrow \mv{v_2}
+}{
+  \mv{E} \vdash \matchl{\mv{e_1}}{\mv{e_2}}{\mv{x}}{\mv{y}}{\mv{e_3}} \Downarrow \mv{v_2}
+}
+\infrule[E-MatchCons]{
+  \mv{E} \vdash \mv{e_1} \Downarrow \mv{v_1}\texttt{::}\mv{v_2} \andalso
+  \mv{E}, \mv{x} = \mv{v_1}, \mv{y} = \mv{v_2} \vdash \mv{e_3} \Downarrow \mv{v_3}
+}{
+  \mv{E} \vdash \matchl{\mv{e_1}}{\mv{e_2}}{\mv{x}}{\mv{y}}{\mv{e_3}} \Downarrow \mv{v_2}
+}
+
+\fbox{$\mv{v_1}@\mv{v_2} \Downarrow \mv{v_3}$}
+
+\infrule[A-Fun]{
+  \mv{E_0}, \mv{x}=\mv{v_2} \vdash \mv{e_0}\ \Downarrow \mv{v}
+}{
+  \texttt{(\mv{E_0})[$\absunty{\mv{x}}{\mv{e_0}}$]} @ \mv{v_2} \Downarrow \mv{v}
+}
+\infrule[A-Rec]{
+  \mv{E_0}, \mv{x}=\texttt{(\mv{E_0})[rec $\mv{x}$($\mv{y}$) = \mv{e_0}]},
+  \mv{y}=\mv{v_2} \vdash \mv{e_0}\ \Downarrow \mv{v}
+}{
+  \texttt{(\mv{E_0})[rec $\mv{x}$($\mv{y}$) = \mv{e_0}]} @ \mv{v_2} \Downarrow \mv{v}
+}
+
+\subsection{Typing}
+
+\fbox{$\mv{\Gamma} \vdash \mv{e} \COL \mv{T}$}
+\[
+\begin{array}{lcl}
+ \mv{\Gamma} & ::= & \bullet \\
+ & | & \mv{\Gamma},\ \mv{x}\COL \mv{T}
+\end{array}
+\]
+
+\infrule[T-Var]{
+  (\mv{x} \COL \mv{T} \in \mv{\Gamma})
+}{
+  \mv{\Gamma} \p \mv{x} \COL \mv{T}
+}
+\infrule[T-Num]{
+}{
+  \mv{\Gamma} \p \mv{n} \COL \nat
+}
+\infrule[T-Bool]{
+}{
+  \mv{\Gamma} \p \mv{b} \COL \bool
+}
+\infrule[T-Plus]{
+  \mv{\Gamma} \p \mv{e_1} \COL \nat \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \nat
+}{
+  \mv{\Gamma} \p \mv{e_1} \texttt{+} \mv{e_2} \COL \nat
+}
+\infrule[T-If]{
+  \mv{\Gamma} \p \mv{e_1} \COL \bool \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{T} \andalso
+  \mv{\Gamma} \p \mv{e_3} \COL \mv{T}
+}{
+  \mv{\Gamma} \p \bif{\mv{e_1}}{\mv{e_2}}{\mv{e_3}} \COL \mv{T}
+}
+\infrule[T-Let]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{T_1} \andalso
+  \mv{\Gamma}, \mv{x} \COL \mv{T_1} \p \mv{e_2} \COL \mv{T}
+}{
+  \mv{\Gamma} \p \texttt{let $\mv{x} = \mv{e_1}$ in $\mv{e_2}$} \COL \mv{T}
+}
+\infrule[T-Fun]{
+  \mv{\Gamma},\ \mv{x}\COL\mv{S} \p \mv{e_0} \COL \mv{T} \andalso
+  (\mv{x} \not \in \dom(\mv{\Gamma}))
+}{
+  \mv{\Gamma} \p \abs{\mv{x}}{\mv{S}}{\mv{e_0}} \COL \mv{S} \imp \mv{T}
+}
+\infrule[T-App]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{S}\imp \mv{T} \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{S}
+}{
+  \mv{\Gamma} \p \mv{e_1}\; \mv{e_2} \COL \mv{T}
+}
+\infrule[T-LetRec]{
+  \mv{\Gamma}, \mv{x} \COL \mv{T_1} \imp \mv{T_2}, \mv{y} \COL \mv{T_1} \p \mv{e_1} \COL \mv{T_2} \andalso
+  \mv{\Gamma}, \mv{x} \COL \mv{T_1} \imp \mv{T_2} \p \mv{e_2} \COL \mv{T}
+}{
+  \mv{\Gamma} \p \texttt{let rec $\mv{x}$($\mv{y}\COL\mv{T_1}$)$ \COL \mv{T_2} = \mv{e_1}$ in $\mv{e_2}$} \COL \mv{T}
+}
+\infrule[T-Nil]{
+}{
+  \mv{\Gamma} \p \texttt{[\mv{T}]} \COL \mv{T}\; \listty
+}
+\infrule[T-Cons]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{T} \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{T}\; \listty
+}{
+  \mv{\Gamma} \p \mv{e_1} \texttt{::} \mv{e_2} \COL \mv{T}\; \listty
+}
+\infrule[T-Match]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{T_1}\; \listty \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{T} \andalso
+  \mv{\Gamma}, \mv{x} \COL \mv{T_1}, \mv{y} \COL \mv{T_1}\; \listty \p \mv{e_3} \COL \mv{T}
+}{
+  \mv{\Gamma} \p \matchl{\mv{e_1}}{\mv{e_2}}{\mv{x}}{\mv{y}}{\mv{e_3}} \COL \mv{T}
+}
+
+
+\section{GTLC}
+
+\subsection{GTLC Syntax}
+\[
+  \begin{array}{llcl}
+\mbox{(types)} & \mv{S}, \mv{T} & ::= & \cdots \mid \texttt{?} \\
+\end{array}
+\]
+
+\subsection{GTLC Typing}
+
+\fbox{$\mv{T_1} \sim \mv{T_2}$}
+
+\infrule{
+}{
+  \nat \sim \nat
+}
+\infrule{
+}{
+  \bool \sim \bool
+}
+\infrule{
+}{
+  \mv{T} \sim \dyn
+}
+\infrule{
+}{
+  \dyn \sim \mv{T}
+}
+\infrule{
+  \mv{S_1} \sim \mv{S_2} \andalso
+  \mv{T_1} \sim \mv{T_2}
+}{
+  \mv{S_1} \imp \mv{T_1} \sim \mv{S_2} \imp \mv{T_2}
+}
+\infrule{
+  \mv{T_1} \sim \mv{T_2}
+}{
+  \mv{T_1} \; \listty \sim \mv{T_2} \; \listty
+}
+
+
+\fbox{$\mv{\Gamma} \vdash \mv{e} \COL \mv{T}$}
+\infrule[T-Var]{
+  (\mv{x} \COL \mv{T} \in \mv{\Gamma})
+}{
+  \mv{\Gamma} \p \mv{x} \COL \mv{T}
+}
+\infrule[T-Num]{
+}{
+  \mv{\Gamma} \p \mv{n} \COL \nat
+}
+\infrule[T-Bool]{
+}{
+  \mv{\Gamma} \p \mv{b} \COL \bool
+}
+\infrule[T-Plus]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{T_1} \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{T_2} \andalso
+  \mv{T_1} \sim \nat \andalso
+  \mv{T_2} \sim \nat
+}{
+  \mv{\Gamma} \p \mv{e_1} \texttt{ + } \mv{e_2} \COL \nat
+}
+\infrule[T-If]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{T_1} \andalso
+  \mv{T_1} \sim \bool \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{T} \andalso
+  \mv{\Gamma} \p \mv{e_3} \COL \mv{T}
+}{
+  \mv{\Gamma} \p \bif{\mv{e_1}}{\mv{e_2}}{\mv{e_3}} \COL \mv{T}
+}
+\infrule[T-Let]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{T_1} \andalso
+  \mv{\Gamma}, \mv{x} \COL \mv{T_1} \p \mv{e_2} \COL \mv{T}
+}{
+  \mv{\Gamma} \p \texttt{let $\mv{x} = \mv{e_1}$ in $\mv{e_2}$} \COL \mv{T}
+}
+\infrule[T-Fun]{
+  \mv{\Gamma},\ \mv{x}\COL\mv{S} \p \mv{e_0} \COL \mv{T} \andalso
+  (\mv{x} \not \in \dom(\mv{\Gamma}))
+}{
+  \mv{\Gamma} \p \abs{\mv{x}}{\mv{S}}{\mv{e_0}} \COL \mv{S} \imp \mv{T}
+}
+\infrule[T-App1]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{S_1}\imp \mv{T} \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{S_2} \andalso
+  \mv{S_1} \sim \mv{S_2}
+}{
+  \mv{\Gamma} \p \mv{e_1}\; \mv{e_2} \COL \mv{T}
+}
+\infrule[T-App2]{
+  \mv{\Gamma} \p \mv{e_1} \COL \dyn \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{S}
+}{
+  \mv{\Gamma} \p \mv{e_1}\; \mv{e_2} \COL \dyn
+}
+\infrule[T-LetRec]{
+  \mv{\Gamma}, \mv{x} \COL \mv{T_1} \imp \mv{T_2}, \mv{y} \COL \mv{T_1} \p \mv{e_1} \COL \mv{T_2} \andalso
+  \mv{\Gamma}, \mv{x} \COL \mv{T_1} \imp \mv{T_2} \p \mv{e_2} \COL \mv{T}
+}{
+  \mv{\Gamma} \p \texttt{let rec $\mv{x}$($\mv{y}\COL\mv{T_1}$)$ \COL \mv{T_2} = \mv{e_1}$ in $\mv{e_2}$} \COL \mv{T}
+}
+\infrule[T-Nil]{
+}{
+  \mv{\Gamma} \p \texttt{[\mv{T}]} \COL \mv{T}\; \listty
+}
+\infrule[T-Cons]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{T} \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{T}\; \listty
+}{
+  \mv{\Gamma} \p \mv{e_1} \texttt{::} \mv{e_2} \COL \mv{T}\; \listty
+}
+\infrule[T-Match1]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{T_1}\; \listty \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{T} \andalso
+  \mv{\Gamma}, \mv{x} \COL \mv{T_1}, \mv{y} \COL \mv{T_1}\; \listty \p \mv{e_3} \COL \mv{T}
+}{
+  \mv{\Gamma} \p \matchl{\mv{e_1}}{\mv{e_2}}{\mv{x}}{\mv{y}}{\mv{e_3}} \COL \mv{T}
+}
+\infrule[T-Match1]{
+  \mv{\Gamma} \p \mv{e_1} \COL \dyn \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{T} \andalso
+  \mv{\Gamma}, \mv{x} \COL \dyn, \mv{y} \COL \dyn\; \listty \p \mv{e_3} \COL \mv{T}
+}{
+  \mv{\Gamma} \p \matchl{\mv{e_1}}{\mv{e_2}}{\mv{x}}{\mv{y}}{\mv{e_3}} \COL \mv{T}
+}
+
+\subsection{IL Syntax}
+\[
+  \begin{array}{llcl}
+    \mbox{(types)} & \mv{S}, \mv{T} & ::= & \cdots \mid \dyn \\
+    \mbox{(type tag)} & \mv{G} & ::= & \nat \mid \bool \mid \dyn\imp \dyn \mid \dyn\; \listty \\
+    \mbox{(expressions)} & \mv{e} & ::= & \cdots \\
+    && | & \cast{\mv{e}}{\mv{S}}{\mv{T}} \\
+    \mbox{(values)} & \mv{v} & ::= & \cdots \\
+    && | & \cast{\mv{v}}{\mv{S_1} \imp \mv{S_2}}{\mv{T_1} \imp \mv{T_2}} \\
+    && | & \cast{\mv{v}}{\mv{G}}{\dyn} \\
+\mbox{(environments)}    
+    &\mv{E}& ::= & \bullet \\ && | & \mv{E}, \mv{x} = \mv{v}
+\end{array}
+\]
+
+\subsection{IL Evaluation}
+\noindent
+\fbox{$\cast{\mv{v_1}}{\mv{S}}{\mv{T}} \Downarrow \mv{v_2}$}
+\infrule[C-Refl]{
+}{
+  \cast{\mv{v}}{\mv{T}}{\mv{T}} \Downarrow \mv{v}
+}
+\infrule[C-IntDyn]{
+}{
+  \cast{\mv{n}}{\nat}{\dyn} \Downarrow \cast{\mv{n}}{\nat}{\dyn}
+}
+\infrule[C-BoolDyn]{
+}{
+  \cast{\mv{b}}{\bool}{\dyn} \Downarrow \cast{\mv{b}}{\bool}{\dyn}
+}
+\infrule[C-GFunDyn]{
+}{
+  \cast{\mv{v}}{\dyn \imp \dyn}{\dyn} \Downarrow
+  \cast{\mv{v}}{\dyn \imp \dyn}{\dyn}
+}
+\infrule[C-FunDyn]{
+  \mv{S_1} \neq \dyn \mbox{ or } \mv{S_2} \neq \dyn
+}{
+  \cast{\mv{v}}{\mv{S_1} \imp \mv{S_2}}{\dyn} \Downarrow
+  \cast{(\cast{\mv{v}}{\mv{S_1} \imp \mv{S_2}}{\dyn\imp\dyn})}{\dyn\imp\dyn}{\dyn}
+}
+\infrule[C-GListDyn]{
+}{
+  \cast{\mv{v}}{\dyn \; \listty}{\dyn} \Downarrow
+    \cast{\mv{v}}{\dyn \; \listty}{\dyn}
+}
+\infrule[C-ListDyn]{
+  \mv{S} \neq \dyn \andalso
+  \cast{\mv{v}}{\mv{S} \; \listty}{\dyn\; \listty} \Downarrow \mv{v'}
+}{
+  \cast{\mv{v}}{\mv{S} \; \listty}{\dyn} \Downarrow
+  \cast{\mv{v'}}{\dyn\; \listty}{\dyn}
+}
+\infrule[C-Collapse]{
+}{
+  \cast{(\cast{\mv{v}}{\mv{G}}{\dyn})}{\dyn}{\mv{G}} \Downarrow \mv{v}
+}
+\infrule[C-Conflict]{
+  \mv{G} \neq \mv{G'}
+}{
+  \cast{(\cast{\mv{v}}{\mv{G}}{\dyn})}{\dyn}{\mv{G'}} \Downarrow \textbf{error}
+}
+\infrule[C-DynFun]{
+  \mv{T_1} \neq \dyn \mbox{ or } \mv{T_2} \neq \dyn \andalso
+  \cast{\mv{v}}{\dyn}{\dyn\imp\dyn} \Downarrow \mv{v'}
+}{
+  \cast{\mv{v}}{\dyn}{\mv{T_1}\imp\mv{T_2}} \Downarrow
+  \cast{\mv{v'}}{\dyn\imp\dyn}{\mv{T_1}\imp\mv{T_2}}
+}
+\infrule[C-DynList]{
+  \mv{T} \neq \dyn \andalso
+  \cast{\mv{v}}{\dyn}{\dyn\; \listty} \Downarrow \mv{v'} \andalso
+  \cast{\mv{v'}}{\dyn\; \listty}{\mv{T} \; \listty} \Downarrow \mv{v''}
+}{
+  \cast{\mv{v}}{\dyn}{\mv{T} \; \listty} \Downarrow \mv{v''}
+}
+\infrule[C-Wrap]{
+  \mv{S_1} \neq \mv{T_1} \mbox{ or } \mv{S_2} \neq \mv{T_2}
+}{
+  \cast{\mv{v}}{\mv{S_1}\imp\mv{S_2}}{\mv{T_1}\imp\mv{T_2}} \Downarrow
+  \cast{\mv{v}}{\mv{S_1}\imp\mv{S_2}}{\mv{T_1}\imp\mv{T_2}}
+}
+\infrule[C-ListListN]{
+}{
+  \cast{\texttt{[]}}{\mv{S}\; \listty}{\mv{T}\; \listty} \Downarrow \texttt{[]}
+}
+\infrule[C-ListListC]{
+  \mv{S} \neq \mv{T} \andalso
+  \cast{\mv{v_1}}{\mv{S}}{\mv{T}} \Downarrow \mv{v_1'} \andalso
+  \cast{\mv{v_2}}{\mv{S}\; \listty}{\mv{T}\; \listty} \Downarrow \mv{v_2'}
+}{
+  \cast{(\mv{v_1}\texttt{::}\mv{v_2})}{\mv{S}\; \listty}{\mv{T}\; \listty} \Downarrow \mv{v_1'} \texttt{::} \mv{v_2'}
+}
+
+\noindent
+\fbox{$\mv{E} \vdash \mv{e} \Downarrow \mv{v}$}
+%
+% \infrule{
+%   \mv{E} \vdash \mv{e_1} \Downarrow \cast{\mv{v_1}}{\mv{S_1} \imp \mv{S_2}}{\mv{T_1} \imp \mv{T_2}} \andalso
+%   \mv{E} \vdash \mv{e_2} \Downarrow \mv{v_2} \andalso
+%   \mv{E} \vdash \cast{(\mv{v_1}\; (\cast{\mv{v_2}}{\mv{S_2}}{\mv{S_1}}))}{\mv{T_1}}{\mv{T_2}} \Downarrow \mv{v}
+% }{
+%   \mv{E} \vdash \mv{e_1}\; \mv{e_2} \Downarrow \mv{v}
+% }
+\infrule[E-Cast]{
+  \mv{E} \vdash \mv{e_0} \Downarrow \mv{v_0} \andalso
+  \cast{\mv{v_0}}{\mv{S}}{\mv{T}} \Downarrow \mv{v}
+}{
+  \mv{E} \vdash \cast{\mv{e_0}}{\mv{S}}{\mv{T}} \Downarrow \mv{v}
+  }
+
+\fbox{$\mv{v_1}@\mv{v_2} \Downarrow \mv{v_3}$}
+
+\infrule[A-Wrap]{
+  \cast{\mv{v_2}}{\mv{T_1}}{\mv{S_1}} \Downarrow \mv{v_2'} \andalso
+  \mv{v_1} @ \mv{v_2'} \Downarrow \mv{v'} \andalso
+  \cast{\mv{v'}}{\mv{S_2}}{\mv{T_2}} \Downarrow \mv{v}
+}{
+  (\cast{\mv{v_1}}{\mv{S_1} \imp \mv{S_2}}{\mv{T_1} \imp \mv{T_2}}) @ \mv{v_2} \Downarrow \mv{v}
+}
+
+\subsection{Translation}
+
+\[
+  \optcast{\mv{e}}{\mv{S}}{\mv{T}} =   \left\{
+    \begin{array}{ll}
+    \mv{e} & \mbox{if $\mv{S}=\mv{T}$} \\
+    \cast{\mv{e}}{\mv{S}}{\mv{T}} & \mbox{otherwise}
+    \end{array}
+    \right.
+\]
+
+\noindent
+\fbox{$\mv{\Gamma} \p \mv{e} \COL \mv{T} \leadsto \mv{e'}$}
+\infrule[Tr-App1]{
+  \mv{\Gamma} \p \mv{e_1} \COL \mv{S_1}\imp \mv{T} \leadsto \mv{e_1'} \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{S_2} \leadsto \mv{e_2'} \andalso
+  \mv{S_1} \sim \mv{S_2}
+}{
+  \mv{\Gamma} \p \mv{e_1}\; \mv{e_2} \COL \mv{T} \leadsto \; \mv{e_1'}\; (\optcast{\mv{e_2'}}{\mv{S_2}}{\mv{S_1}})
+}
+\infrule[Tr-App2]{
+  \mv{\Gamma} \p \mv{e_1} \COL \dyn \leadsto \mv{e_1'} \andalso
+  \mv{\Gamma} \p \mv{e_2} \COL \mv{S} \leadsto \mv{e_2'}
+}{
+  \mv{\Gamma} \p \mv{e_1}\; \mv{e_2} \COL \dyn \leadsto
+  (\cast{\mv{e_1'}}{\dyn}{\dyn\imp\dyn})\; (\optcast{\mv{e_2'}}{\mv{S}}{\dyn})
+}
+
+\end{document}

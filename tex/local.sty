@@ -1,0 +1,63 @@
+\newcommand{\email}{\texttt{igarashi@kuis.kyoto-u.ac.jp}}
+%\newcommand{\classURL}{\url{http://www.fos.kuis.kyoto-u.ac.jp/~igarashi/class/cal/}}
+
+% The following two macros should be unified.
+\newcommand{\newterm}[2]{\textbf{#1}(\emph{#2})}
+\newcommand{\intro}[2]{\textbf{#1}(\emph{#2})}
+
+\ifthenelse{\isundefined{\theorem}}{%
+\newtheorem{theorem}{定理}
+\newtheorem{definition}{定義}
+}{%
+}
+
+\newtheorem{exercise}{練習問題}[section]
+
+\newcommand{\meta}[1]{{\color{blue} \langle \mbox{#1} \rangle}}
+\newcommand{\blue}[1]{{\color{blue} #1}}
+\newcommand{\black}[1]{{\color{black} #1}}
+\newcommand{\brown}[1]{{\color{brown} #1}}
+\newcommand{\gray}[1]{{\color{gray} #1}}
+
+\newcommand{\eq}{\mathrel{\texttt{=}}}
+\newcommand{\plus}{\mathbin{\texttt{+}}}
+\newcommand{\ttimes}{\mathbin{\texttt{*}}}
+\newcommand{\imp}{\rightarrow}
+\newcommand{\COL}{\;\texttt{:}\;}
+\newcommand{\red}{\longrightarrow}
+\newcommand{\redeq}{\longleftrightarrow}
+\newcommand{\forallun}[2]{\mv{\forall}\texttt{#1,} #2}
+\newcommand{\forallty}[3]{\mv{\forall}\texttt{#1}\COL#2\texttt{,} #3}
+\newcommand{\existsun}[2]{\mv{\exists}\texttt{#1,} #2}
+\newcommand{\existsty}[3]{\mv{\exists}\texttt{#1}\COL#2\texttt{,} #3}
+\newcommand{\p}{\ \mv{\vdash}\ }
+\newcommand{\set}[1]{\{#1\}}
+\newcommand{\dom}{\mathit{dom}}
+\newcommand{\FV}{\mathit{FV}}
+
+%%% Types
+\newcommand{\nat}{\texttt{int}}
+\newcommand{\bool}{\texttt{bool}}
+\newcommand{\dyn}{\texttt{?}}
+\newcommand{\natlist}{\texttt{natlist}}
+\newcommand{\listty}{\texttt{list}}
+\newcommand{\Prop}{\texttt{Prop}}
+\newcommand{\Type}{\texttt{Type}}
+\newcommand{\Prod}{\mathbin{\texttt{*}}}
+
+%%% Terms
+\newcommand{\abs}[3]{\texttt{fun ($#1 \COL #2$)$\rightarrow #3$}}
+\newcommand{\absunty}[2]{\texttt{fun ($#1$)$\rightarrow #2$}}
+\newcommand{\fix}[5]{\texttt{fix $#1$($#2 \COL #3$)$\COL #4$ := $#5$}}
+\newcommand{\match}[5]{\texttt{match $#1$ with 0 => $#2$ | $#3$ :: $#4$ $\imp$ $#5$ end}}
+\newcommand{\bif}[3]{\texttt{if $#1$ then $#2$ else $#3$}}
+
+\newcommand{\nil}{\texttt{nil}}
+\newcommand{\cons}[2]{\mathbin{\texttt{cons}}\;#1\;#2}
+\newcommand{\matchl}[5]{\texttt{match $#1$ with [] $\imp$ $#2$ | $#3$ ::\ $#4$ $\imp$ $#5$}}
+
+\newcommand{\cast}[3]{#1 \COL #2 \Rightarrow #3}
+\newcommand{\optcast}[3]{#1 \COL #2 \stackrel{?}{\Rightarrow} #3}
+\newcommand{\fst}{\texttt{fst }}
+\newcommand{\snd}{\texttt{snd }}
+\newcommand{\pmatch}[4]{\texttt{match $#1$ with ($#2$, $#3$) => $#4$ end}}
